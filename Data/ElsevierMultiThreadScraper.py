@@ -6,11 +6,13 @@ import pandas as pd
 from multiprocessing import Pool
 from functools import partial
 
-"WARNING: This code is capable of completely blitzing the Elsevier servers with (especially with threads > 4)." \
-"Not recommended as it may get your account suspended, though it does afford a 10x increase in speed. "
+"""
+WARNING: This code is capable of completely blitzing the Elsevier servers with (especially with threads > 4).
+Not recommended as it may get your API account suspended, though num_threads=4 does afford a 10x increase in speed 
+compared to num_threads=1. Set to 3 by default to err on the side of caution
+"""
 
-
-def mp_handler(DOI_file, output_file, mapped_function, num_processes=4):
+def mp_handler(DOI_file, output_file, mapped_function, num_processes=3):
     """
     Manages multiprocessing for scraping functions. Takes a list of DOIs and an output file, finds the most recent DOI
     in the output file and iterates through the DOIs from there.
@@ -57,9 +59,8 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=4):
 
 def ElsevierScraper(client, target_DOI):
     """
-    Uses the Elsevier API and a list of DOIs to download plain text articles, including the title, abstract, pub date,
-    and the references as an unstructured string. Automatically resumes at the most recent DOI using the last line of
-    the output file.
+    Uses the Elsevier API with a valid key and a DOI to download the plain text article, including the title, abstract, pub date,
+    and the references as an unstructured string. 
 
     :param client: Elsevier client containing the API key
     :param target_DOI: DOI of the article being scraped
