@@ -12,7 +12,9 @@
 * [ ] Test pipeline using the current version of the experiment
 
 ### Gather Data
-* [ ] Collect MatSci literature, preferably full plain text
+* [x] Write scraper for Elsevier
+* [ ] Write scraper for Springer
+* [ ] Distribute scrapers across numerous machines (4 - 10 ideally)
 * [ ] Determine which knowledge bases are best suits our needs for MatSci. Download and analyze them
 * [ ] Collect other potentially fruitful literature for further testing
 * [ ] Find knowledge bases from the domains of this additional literature
