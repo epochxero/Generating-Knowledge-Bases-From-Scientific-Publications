@@ -2,17 +2,18 @@ from elsapy.elsclient import ElsClient
 from elsapy.elsdoc import FullDoc
 import csv
 import json
-import pandas as pd
 from multiprocessing import Pool
 from functools import partial
+import os
 
 """
-WARNING: This code is capable of completely blitzing the Elsevier servers with (especially with threads > 4).
+WARNING: This code is capable of completely blitzing the Elsevier servers (especially with threads > 4).
 Not recommended as it may get your API account suspended, though num_threads=4 does afford a 10x increase in speed 
 compared to num_threads=1. Set to 3 by default to err on the side of caution
 """
 
-def mp_handler(DOI_file, output_file, mapped_function, num_processes=3):
+
+def mp_handler(DOI_file, output_file, mapped_function, num_processes=4):
     """
     Manages multiprocessing for scraping functions. Takes a list of DOIs and an output file, finds the most recent DOI
     in the output file and iterates through the DOIs from there.
@@ -33,17 +34,29 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=3):
     total = len(DOIs)
 
     # Tries to start from the most recent DOI present in the output file. If the file is empty, writes headers to file
-    # TODO Test that header writing works properly
     try:
-        start = pd.read_csv(output_file)
-        start = start.tail(1)['DOI'].iloc[0]
+        with open(output_file, 'rb') as f:
+            f.seek(-2, os.SEEK_END)
+            while f.read(1) != b'\n':
+                f.seek(-2, os.SEEK_CUR)
+            last_line = f.readline().decode()
+
+        start = last_line.split(",")[0]
+        print("Most Recent DOI: {}".format(start))
         start = DOIs.index(start.strip("\n").strip("\r")) + 1
+        print("Resume Position: {}".format(start))
         DOIs = DOIs[start:]
 
     except:
-        with open(output_file, mode='a', encoding='utf8', newline="") as outputFile:
-            output_writer = csv.writer(outputFile, delimiter=',')
-            output_writer.writerow(["DOI", "Title", "Abstract", "Publication Date", "Text", "References"])
+        if os.path.isfile(output_file):
+            print("Invalid DOI, please check the last line of the file to ensure it's written properly")
+            return
+        else:
+            print("No file exists, initializing file")
+            with open(output_file, mode='a', encoding='utf8', newline="") as outputFile:
+                output_writer = csv.writer(outputFile, delimiter=',')
+                output_writer.writerow(["DOI", "Title", "Abstract", "Publication Date", "Text", "References"])
+
     progress = total - len(DOIs)
 
     pool = Pool(processes=num_processes)
@@ -59,8 +72,8 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=3):
 
 def ElsevierScraper(client, target_DOI):
     """
-    Uses the Elsevier API with a valid key and a DOI to download the plain text article, including the title, abstract, pub date,
-    and the references as an unstructured string. 
+    Uses the Elsevier API with a valid key and a DOI to download the plain text article, including the title, abstract,
+    pub date, and the references as an unstructured string.
 
     :param client: Elsevier client containing the API key
     :param target_DOI: DOI of the article being scraped
