@@ -9,7 +9,9 @@ import os
 """
 WARNING: This code is capable of completely blitzing the Elsevier servers (especially with threads > 4).
 Not recommended as it may get your API account suspended, though num_threads=4 does afford a 10x increase in speed 
-compared to num_threads=1. Set to 3 by default to err on the side of caution
+compared to num_threads=1. Set to 2 by default to err on the side of caution. When running, time how long it takes
+to grab 100 articles (the progress counter appears every 100 articles). 18 - 20 seconds is the fastest tested range (no
+issues) but 20 - 25 seconds is likely less likely safer. 
 """
 
 
@@ -28,7 +30,7 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=4):
     DOIs = []
     with open(DOI_file, 'r') as f:
         for line in f.readlines():
-            # This is only here becust j. DOIs have a higher success rate than others while the Springer scraper is being made
+            # Only necessary if using original DOI list
             if "j." in line:
                 DOIs.append(line.strip("\n").strip("\r"))
     total = len(DOIs)
@@ -47,7 +49,8 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=4):
         print("Resume Position: {}".format(start))
         DOIs = DOIs[start:]
 
-    except:
+    except Exception as e:
+        print(e)
         if os.path.isfile(output_file):
             print("Invalid DOI, please check the last line of the file to ensure it's written properly")
             return
@@ -69,6 +72,7 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=4):
             if count % 100 == 0:
                 print("Total Progress: {}%".format(round(float(count + progress) / total * 100, 4)))
 
+    print("Done!")
 
 def ElsevierScraper(client, target_DOI):
     """
@@ -95,7 +99,9 @@ def ElsevierScraper(client, target_DOI):
         date = coreData['prism:coverDisplayDate']
         return [target_DOI, doi_doc.title, abstract, date, text, references]
     else:
-        print("Read document failed.")
+        # Could save this to a separate file but it's easier to search for NA and make a new sublist after the fact
+        print("Error: couldn't read {}.".format(target_DOI))
+        return [target_DOI, "NA", "NA","NA","NA","NA"]
 
 
 if __name__ == "__main__":
@@ -103,6 +109,5 @@ if __name__ == "__main__":
     with open('config.json', 'r') as j:
         config = json.load(j)
     client = ElsClient(config['apikey'])
-
     scraper = partial(ElsevierScraper, client)
-    mp_handler('DOIs.txt', "MatSciFullText.csv", scraper, num_processes=4)
+    mp_handler('DOI_j.txt', "MatSciFullText.csv", scraper, num_processes=2)
