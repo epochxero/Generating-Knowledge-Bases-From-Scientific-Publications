@@ -2,14 +2,18 @@ from elsapy.elsclient import ElsClient
 from elsapy.elsdoc import FullDoc
 import csv
 import json
+import pandas as pd
 
 
-def ElsevierScraper(config_file, DOI_file, output_file, last_DOI=None):
+def ElsevierScraper(config_file, DOI_file, output_file):
     """
+    Uses the Elsevier API and a list of DOIs to download plain text articles, including the title, abstract, pub date, 
+    and the references as an unstructured string. Automatically resumes at the most recent DOI using the last line of 
+    the output file.
+    
     :param config_file: configuration json file, so far just contains the API key
     :param DOI_file: input .txt file containing one DOI per row
     :param output_file: csv file containing output
-    :param last_DOI: most recent DOI in file, used as a save point
     :return:
     """
 
@@ -19,8 +23,6 @@ def ElsevierScraper(config_file, DOI_file, output_file, last_DOI=None):
 
     client = ElsClient(config['apikey'])
     DOIs = []
-    count = 0
-    output = [["DOI", "Title", "Abstract", "Publication Date", "Text", "References"]]
 
     with open(DOI_file, 'r') as f:
         for line in f.readlines():
@@ -28,13 +30,19 @@ def ElsevierScraper(config_file, DOI_file, output_file, last_DOI=None):
             if "j." in line:
                 DOIs.append(line.strip("\n").strip("\r"))
     total = len(DOIs)
-    if last_DOI:
-        start = DOIs.index(last_DOI.strip("\n").strip("\r")) + 1
+
+    # Tries to start from the most recent DOI present in the output file. If the file is empty, starts from the begining
+    try:
+        start = pd.read_csv(output_file)
+        start = start.tail(1)['DOI'].iloc[0]
+        start = DOIs.index(start.strip("\n").strip("\r")) + 1
         DOIs = DOIs[start:]
         output = []
+    except:
+        output = [["DOI", "Title", "Abstract", "Publication Date", "Text", "References"]]
 
     progress = total - len(DOIs)
-    print(len(DOIs))
+    count = 0
 
     for DOI in DOIs:
         print(DOI)
@@ -59,7 +67,7 @@ def ElsevierScraper(config_file, DOI_file, output_file, last_DOI=None):
                 output = []
 
             if count % 100 == 0:
-                print(round(float(count + progress) / total * 100, 4))
+                print("Total Progress: {}%".format(round(float(count + progress) / total * 100, 4)))
 
         else:
             print("Read document failed.")
@@ -68,5 +76,6 @@ def ElsevierScraper(config_file, DOI_file, output_file, last_DOI=None):
         writer = csv.writer(f)
         writer.writerows(output)
 
+
 if __name__ == "__main__":
-    ElsevierScraper('config.json', "DOIs.txt", "MatSciFullText.csv", "10.1016/j.solmat.2010.01.023")
+    ElsevierScraper('config.json', "DOIs.txt", "MatSciFullText.csv")
