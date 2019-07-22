@@ -1,0 +1,54 @@
+from elsapy.elsclient import ElsClient
+from elsapy.elsprofile import ElsAuthor
+from elsapy.elsdoc import FullDoc
+import csv
+import json
+
+# Load configuration
+with open("config.json", 'r') as j:
+    config = json.load(j)
+
+## Initialize client
+client = ElsClient(config['apikey'])
+my_auth = ElsAuthor(uri='https://api.elsevier.com/content/author/author_id/7004367821')
+
+DOIs = []
+with open("DOIs.txt", 'r') as f:
+    for line in f.readlines():
+        # This is only here becust j. DOIs have a higher success rate than others while the Springer scraper is being made
+        if "j." in line:
+            DOIs.append(line.strip("\n").strip("\r"))
+print(len(DOIs))
+
+count = 0
+output = [["Title", "Abstract", "Publication Date", "Text", "References"]]
+for DOI in DOIs:
+    print(DOI)
+    doi_doc = FullDoc(doi=DOI)
+    if doi_doc.read(client):
+        data = doi_doc.data
+        coreData = data['coredata']
+        abstract = coreData['dc:description']
+        text = str(data['originalText']).split(abstract)[-1]
+        try:
+            references = text.split("References")[1]
+        except IndexError:
+            references = "N/A"
+        text = text.split("References")[0]
+        date = coreData['prism:coverDisplayDate']
+        # print(text)
+        # text = text.split(abstract).split("Refeneces")
+        output.append([doi_doc.title, abstract, date, text, references])
+        count += 1
+        if count % 10 == 0:
+            with open("MatSciFullText.csv", "a", encoding='utf8', newline="") as f:
+                writer = csv.writer(f)
+                writer.writerows(output)
+            output = []
+
+    else:
+        print("Read document failed.")
+
+with open("MatSciFullText.csv", "a", encoding='utf8', newline="") as f:
+    writer = csv.writer(f)
+    writer.writerows(output)
