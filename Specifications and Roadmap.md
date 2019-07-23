@@ -13,8 +13,8 @@
 
 ### Gather Data
 * [x] Write scraper for Elsevier
-* [ ] Write scraper for Springer
-* [ ] Distribute scrapers across numerous machines (4 - 10 ideally)
+* ~~[ ] Write scraper for Springer~~ 5000 hits/day limit greatly restricts usefulness
+* [x] Distribute scrapers across numerous machines (4 - 10 ideally)
 * [ ] Determine which knowledge bases are best suits our needs for MatSci. Download and analyze them
 * [ ] Collect other potentially fruitful literature for further testing
 * [ ] Find knowledge bases from the domains of this additional literature
