@@ -1,0 +1,1 @@
+Unsure at this time how we'll want to structure this directory. I imagine we'll have separate folders for the language model code, the knowledge base code and the COMET code, but will leave that to the discretion of those who are working on the pipelin directly.
