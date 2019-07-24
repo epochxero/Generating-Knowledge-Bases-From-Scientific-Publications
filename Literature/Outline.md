@@ -1,3 +1,5 @@
+The following is a guide on how to structure your literature review to keep things consistent and make it easier to collaborate and eventually aggregate the reviews for development of the final experiment and paper.
+
 # Title 
 
 ### Overview
