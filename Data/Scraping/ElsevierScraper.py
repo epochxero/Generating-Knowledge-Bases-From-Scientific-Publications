@@ -71,7 +71,7 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=2):
                 f.seek(-2, os.SEEK_CUR)
             last_line = f.readline().decode()
 
-        start = last_line.split(",")[1]
+        start = last_line.split(",")[0]
         print("Most Recent DOI: {}".format(start))
         print("Most Recent Output: {}".format(last_line))
         start = DOIs.index(start.strip("\n").strip("\r")) + 1
@@ -104,9 +104,8 @@ def mp_handler(DOI_file, output_file, mapped_function, num_processes=2):
                 print("Total Progress: {}%".format(round(float(count + progress) / total * 100, 4)))
                 print("Most Recent Output: {}".format(result))
                 if "xocs" in result:
-                    print("Your output does not contain the full text. Ensure that you're on a registered university network and run it again")
+                    print("Your output may not contain the full text. Ensure that you're on a registered university network and run it again")
 
-                    return
     print("Done!")
 
 def ElsevierScraper(client, target_DOI):
